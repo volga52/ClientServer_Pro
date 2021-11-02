@@ -1,3 +1,4 @@
+import os
 import select
 import socket
 import sys
@@ -17,8 +18,7 @@ import logs.configs.cofig_server_log
 import logs.configs.config_messages_log
 from decos import log_decor
 from metaclasses import ServerMaker
-from server_db import ServerStorage
-
+from server_db_new import ServerStorage  # Требует замены имя файла
 
 LOGGER = logging.getLogger('server')
 LOG_MESSAGES = logging.getLogger('messages')
@@ -46,14 +46,14 @@ class Server(threading.Thread, metaclass=ServerMaker):
         :param client:
         :return:
         """
-        # self.LOG_MESSAGES.debug(f"Разбор сообщения от клиента: '{message}'")
         LOG_MESSAGES.debug(f"Разбор сообщения от клиента: '{message}'")
+
         if ACTION in message and message[ACTION] == PRESENCE and TIME in message and USER in message:
             # Если такой пользователь ещё не зарегистрирован,
             # регистрируем, иначе отправляем ответ и завершаем соединение.
             if message[USER][ACCOUNT_NAME] not in self.names.keys():
-                self.names[message[USER][ACCOUNT_NAME]] = client  # client (socket) Системный элемент (ОС)
-                client_ip, client_port = client.getpeername()  # Вызов функци socket.getpeername()
+                self.names[message[USER][ACCOUNT_NAME]] = client    # client (socket) Системный элемент (ОС)
+                client_ip, client_port = client.getpeername()       # Вызов функци socket.getpeername()
                 self.database.user_login(message[USER][ACCOUNT_NAME], client_ip, client_port)
                 send_message(client, RESPONSE_200)
             else:
@@ -64,11 +64,27 @@ class Server(threading.Thread, metaclass=ServerMaker):
                 client.close()
             return
         # Если это сообщение, то добавляем его в очередь сообщений. Ответ не требуется.
-        elif ACTION in message and message[ACTION] == MESSAGE and \
-                DESTINATION in message and TIME in message \
-                and SENDER in message and MESSAGE_TEXT in message:
+        elif ACTION in message and message[ACTION] == MESSAGE\
+                and DESTINATION in message \
+                and TIME in message \
+                and SENDER in message \
+                and MESSAGE_TEXT in message\
+                and self.names[message[SENDER]] == client:
             self.messages_list.append(message)
+            self.database.process_message(message[SENDER], message[DESTINATION])
             return
+
+        # Сообщение содержит запрос на 'список котактов'
+        elif ACTION in message \
+                and message[ACTION] == GET_CONTACTS \
+                and ACCOUNT_NAME in message \
+                and self.names[message[ACCOUNT_NAME]] == client:
+            response = RESPONSE_202
+
+            # Присоединение к ответу Запроса из БД
+            response['data'] = self.database.get_contact(message[ACCOUNT_NAME])
+            send_message(client, response)
+
         # Если клиент выходит
         elif ACTION in message and message[ACTION] == EXIT and ACCOUNT_NAME in message:
             self.database.user_logout(message[ACCOUNT_NAME])
@@ -83,22 +99,23 @@ class Server(threading.Thread, metaclass=ServerMaker):
             send_message(client, response)
             return
 
+    # Функция адресной отправки сообщения определённому клиенту. Принимает словарь сообщение,
+    # список зарегистрированых пользователей и слушающие сокеты. Ничего не возвращает.
     @log_decor
-    def process_message(self, message, names, listen_socks):
+    # def process_message(self, message, names, listen_socks):
+    def process_message(self, message, listen_socks):
         """
-        Функция адресной отправки сообщения определённому клиенту. Принимает словарь сообщение,
-        список зарегистрированых пользователей и слушающие сокеты. Ничего не возвращает.
         :param message:
         :param names:
         :param listen_socks:
         :return:
         """
-        if message[DESTINATION] in names and names[message[DESTINATION]] in listen_socks:
-            send_message(names[message[DESTINATION]], message)
+        if message[DESTINATION] in self.names and self.names[message[DESTINATION]] in listen_socks:
+            send_message(self.names[message[DESTINATION]], message)
             # self.LOGGER.info(f"Отправлено сообщение пользователю '{message[DESTINATION]}' "
             LOGGER.info(f"Отправлено сообщение пользователю '{message[DESTINATION]}' "
-                             f"от пользователя '{message[SENDER]}'")
-        elif message[DESTINATION] in names and names[message[DESTINATION]] not in listen_socks:
+                        f"от пользователя '{message[SENDER]}.'")
+        elif message[DESTINATION] in self.names and self.names[message[DESTINATION]] not in listen_socks:
             raise ConnectionError
         else:
             # self.LOGGER.error(
@@ -107,7 +124,6 @@ class Server(threading.Thread, metaclass=ServerMaker):
                 f'отправка сообщения невозможна.')
 
     # Функция возвращает socket для соединения
-
     def set_socket_server(self):
         listen_address = self.param_network.address_return  # Получение ip-адреса и порта
         listen_port = self.param_network.port_return
@@ -168,7 +184,7 @@ class Server(threading.Thread, metaclass=ServerMaker):
                     except OSError:
                         # self.LOGGER.info(f'Клиент {client_with_message.getpeername()} '
                         LOGGER.warning(f'Клиент {client_with_message.getpeername()} '
-                                         f'отключился от сервера.')
+                                       f'отключился от сервера.')
                         self.clients_list.remove(client_with_message)
 
                         # Удаляем клиента из self.names по значению его сокета client_with_message
@@ -181,7 +197,7 @@ class Server(threading.Thread, metaclass=ServerMaker):
             # Если есть сообщения, обрабатываем каждое.
             for mess in self.messages_list:
                 try:
-                    self.process_message(mess, self.names, send_data_list)
+                    self.process_message(mess, send_data_list)
                 except OSError:
                     # self.LOGGER.info(f"Связь с клиентом по имени '{mess[DESTINATION]}' была потеряна")
                     LOGGER.info(f"Связь с клиентом по имени '{mess[DESTINATION]}' была потеряна")
@@ -206,7 +222,11 @@ def print_help():
 
 def main():
     LOGGER.warning(f"Запущен server.py")
-    data_base = ServerStorage()
+
+    path = os.path.dirname(os.path.abspath(__file__))  # Путь без файла
+    path = os.path.join(path, r'server_base.db3')
+
+    data_base = ServerStorage(path)
 
     server = Server(SPA(SPA.create_arg_parser()), data_base)
     server.daemon = True

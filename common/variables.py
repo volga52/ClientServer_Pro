@@ -21,6 +21,7 @@ SERVER_DB = 'sqlite:///server_base.db3'
 
 # Прококол JIM основные ключи:
 ACTION = 'action'
+
 TIME = 'time'
 USER = 'user'
 ACCOUNT_NAME = 'account_name'
@@ -32,13 +33,18 @@ PRESENCE = 'presence'
 RESPONSE = 'response'
 ERROR = 'error'
 # MESSAGE = 'message'
+# 1. Комнады
 MESSAGE = 'm-'
+GET_CONTACTS = 'get_contact'
+
 MESSAGE_TEXT = 'mess_text'
 EXIT = 'exit'
 
 # Словари - ответы:
 # 200
 RESPONSE_200 = {RESPONSE: 200}
+# 202
+RESPONSE_202 = {RESPONSE: 202}
 # 400
 RESPONSE_400 = {
     RESPONSE: 400,
