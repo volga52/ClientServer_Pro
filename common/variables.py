@@ -1,4 +1,5 @@
 """Константы"""
+import logging
 
 # Порт по умолчанию для сетевого ваимодействия
 DEFAULT_PORT = 7777
@@ -13,7 +14,8 @@ MAX_CONNECTIONS = 5
 MAX_PACKAGE_LENGTH = 1024
 # Кодировка проекта
 ENCODING = 'utf-8'
-LOGGING_LEVEL = 'DEBUG'
+# LOGGING_LEVEL = 'DEBUG'
+LOGGING_LEVEL = logging.DEBUG
 
 # База данных для хранения данных сервера:
 SERVER_DB = 'sqlite:///server_base.db3'
@@ -32,10 +34,15 @@ DESTINATION = 'to'
 PRESENCE = 'presence'
 RESPONSE = 'response'
 ERROR = 'error'
+DATA = 'data'
+# Комнады
 # MESSAGE = 'message'
-# 1. Комнады
 MESSAGE = 'm-'
+HISTORY = 'history'
 GET_CONTACTS = 'get_contact'
+ADD_CONTACT = 'add'
+REMOVE_CONTACT = 'remove'
+USERS_REQUEST = 'get_users'
 
 MESSAGE_TEXT = 'mess_text'
 EXIT = 'exit'
@@ -44,7 +51,9 @@ EXIT = 'exit'
 # 200
 RESPONSE_200 = {RESPONSE: 200}
 # 202
-RESPONSE_202 = {RESPONSE: 202}
+RESPONSE_202 = {
+    RESPONSE: 202,
+    DATA: None}
 # 400
 RESPONSE_400 = {
     RESPONSE: 400,

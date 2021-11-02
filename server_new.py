@@ -63,6 +63,7 @@ class Server(threading.Thread, metaclass=ServerMaker):
                 self.clients_list.remove(client)
                 client.close()
             return
+
         # Если это сообщение, то добавляем его в очередь сообщений. Ответ не требуется.
         elif ACTION in message and message[ACTION] == MESSAGE\
                 and DESTINATION in message \
@@ -82,8 +83,36 @@ class Server(threading.Thread, metaclass=ServerMaker):
             response = RESPONSE_202
 
             # Присоединение к ответу Запроса из БД
-            response['data'] = self.database.get_contact(message[ACCOUNT_NAME])
+            response[DATA] = self.database.get_contact(message[ACCOUNT_NAME])
             send_message(client, response)
+
+        # Сообщение добавить контакт
+        elif ACTION in message \
+                and message[ACTION] == ADD_CONTACT\
+                and ACCOUNT_NAME in message \
+                and USER in message and \
+                self.names[message[USER]] == client:
+            self.database.add_contact(message[USER], message[ACCOUNT_NAME])
+            send_message(client, RESPONSE_200)
+
+        # Если это запрос известных пользователей
+        elif ACTION in message \
+                and message[ACTION] == USERS_REQUEST \
+                and ACCOUNT_NAME in message \
+                and self.names[message[ACCOUNT_NAME]] == client:
+            response = RESPONSE_202
+            response[DATA] = [user[0] for user in self.database.users_list()]
+            send_message(client, response)
+
+        # Если это удаление контакта
+        elif ACTION in message \
+                and message[ACTION] == REMOVE_CONTACT \
+                and ACCOUNT_NAME in message \
+                and USER in message \
+                and self.names[message[USER]] == client:
+            self.database.remove_contact(message[USER], message[ACCOUNT_NAME])
+            send_message(client, RESPONSE_200)
+
 
         # Если клиент выходит
         elif ACTION in message and message[ACTION] == EXIT and ACCOUNT_NAME in message:
