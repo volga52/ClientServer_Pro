@@ -31,7 +31,7 @@ class ClientDatabase:
     # Конструктор класса:
     def __init__(self, name):
         path = os.path.dirname(os.path.abspath(__file__))     # Путь без файла
-        file_name = f'client_{name}'
+        file_name = f'client_{name}.db3'
         path = os.path.join(path, file_name)
 
         # Создаём движок базы данных, поскольку разрешено несколько клиентов одновременно, каждый должен иметь свою БД
