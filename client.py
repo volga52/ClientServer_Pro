@@ -47,6 +47,7 @@ class ClientReception(threading.Thread, metaclass=ClientMaker):
             with sock_lock:
                 try:
                     message = get_message(self.socket)
+                    print('****')
 
                 except IncorrectDataRecivedError:
                     logs_client.error('Не удалось декодировать полученное сообщение')
@@ -81,6 +82,7 @@ class ClientReception(threading.Thread, metaclass=ClientMaker):
                                          f' {message[MESSAGE_TEXT].split()[0]}...')
                         logs_message.info(f'от пользователя {message[SENDER]}:'
                                           f'{message[MESSAGE_TEXT]}')
+
                     else:
                         logs_client.error(f'Получено некорректное сообщение с сервера: {message}')
 
@@ -155,6 +157,7 @@ class ClientManage(threading.Thread):
         # Сохранение сообщения
         with database_lock:
             self.database.save_message(self.username, recipient, message)
+            logs_client.debug('Запись в таблицу сообщений осуществлена')
 
         # Ожидаем освобождения сокета для отправки сообщения
         with sock_lock:
@@ -346,7 +349,8 @@ def database_load(sock, database, username):
     # Список пользователей
     try:
         users_list = user_list_request(sock, username)
-        logs_client.debug(f"Список всех пользователей получен {'Yes' if users_list.len() else 'None'} ")
+        # logs_client.debug(f"Список всех пользователей получен {users_list} ")
+        logs_client.debug(f"Список всех пользователей получен.")
     except ServerError:
         logs_client.error('Ошибка запроса списка известных пользователей.')
     else:
@@ -377,11 +381,15 @@ def create_connect_client():
         client_name = input('Введите имя пользователя: ')
 
     logs_client.info(
-        f'Запущен клиент с парамертами: адрес сервера: {server_address}, '
+        f'\nЗапущен клиент с парамертами: адрес сервера: {server_address}, '
         f'порт: {server_port}, имя пользователя: {client_name}')
 
     try:
         transport = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        # Таймаут 1 секунда, необходим для освобождения сокета.
+        transport.settimeout(1)
+
         transport.connect((server_address, server_port))
         send_message(transport, create_presence(client_name))
 

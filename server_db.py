@@ -249,7 +249,6 @@ class ServerStorage:
     def get_contact(self, user):
         # Пользователь
         user = self.session.query(self.AllUsers).filter_by(name=user).one()
-        print('get_contact user.one line 252', user)
 
         # Список контактов
         selection = self.session.query(self.UsersContact, self.AllUsers.name). \
@@ -258,9 +257,7 @@ class ServerStorage:
                  self.UsersContact.contact == self.AllUsers.id
                  )
         # Список 'знакомых' только имена
-        print('selection 261')
         list_contacts = [friend[1] for friend in selection.all()]
-        print(list_contacts, 'list_contact from ServerStorage line 263')
         return list_contacts
 
     # Функция возвращает количество сообщений

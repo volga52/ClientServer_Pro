@@ -14,7 +14,7 @@ LOGGER = logging.getLogger('hosts')
 
 class SettingPortAddress:
     LOGGER = logging.getLogger('hosts')
-    # LOGGER.info(f"Входящие параметры '{' '.join(sys.argv)}'")
+    # logger.info(f"Входящие параметры '{' '.join(sys.argv)}'")
 
     port_return = ValidPort()
 
