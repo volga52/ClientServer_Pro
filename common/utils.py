@@ -4,7 +4,7 @@ import sys
 import json
 from common.variables import MAX_PACKAGE_LENGTH, ENCODING
 from errors import IncorrectDataRecivedError, NonDictInputError
-from decos import log_decor
+from common.decos import log_decor
 sys.path.append('../')
 
 

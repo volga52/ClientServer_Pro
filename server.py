@@ -3,24 +3,18 @@ import select
 import socket
 import logging
 import sys
-import time
 import threading
 
-from PyQt5.QtWidgets import QApplication, QMessageBox
+from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QStandardItemModel, QStandardItem
 
 from common.variables import *
 from common.utils import get_message, send_message
-from common import var_server_manage as ser_commands
 from config_network import SettingPortAddress as SPA
-import logs.configs.cofig_server_log
-import logs.configs.config_messages_log
-from decos import log_decor
+from common.decos import log_decor
 from metaclasses import ServerMaker
 from server_db import ServerStorage
-from server_gui import MainWindow, gui_create_model, HistoryWindow, create_stat_model, ConfigWindow
-
+from server_gui import MainWindow, gui_create_model, HistoryWindow, create_stat_model
 
 logger = logging.getLogger('server')
 log_messages = logging.getLogger('messages')
@@ -245,15 +239,6 @@ class Server(threading.Thread, metaclass=ServerMaker):
             self.messages_list.clear()
 
 
-def print_help():
-    print('Поддерживаемые комманды:')
-    print(f'{ser_commands.USERS_ALL} - список известных пользователей')
-    print(f'{ser_commands.USERS_Connect} - список подключенных пользователей')
-    print(f'{ser_commands.HISTORY_LOGS} - история входов пользователя')
-    print(f'{ser_commands.EXIT} - завершение работы сервера.')
-    print(f'{ser_commands.HELP} - вывод справки по поддерживаемым командам')
-
-
 def main():
     logger.warning(f"Запущен server.py")
 
@@ -265,35 +250,6 @@ def main():
     server = Server(SPA(SPA.create_arg_parser()), data_base)
     server.daemon = True
     server.start()
-
-    # # Печатаем справку:
-    # print_help()
-    #
-    # while True:
-    #     command = input('Введите комманду: \n')
-    #     if command == ser_commands.HELP:
-    #         print_help()
-    #     elif command == ser_commands.EXIT:
-    #         break
-    #     elif command == ser_commands.USERS_ALL:
-    #         for user in sorted(data_base.users_list()):
-    #             print(f'Пользователь {user[0]}, последний вход: {user[1]}')
-    #     elif command == ser_commands.USERS_Connect:
-    #         a = sorted(data_base.active_users_list())
-    #         if a:
-    #             # for user in sorted(data_base.active_users_list()):
-    #             for user in a:
-    #                 print(f'Пользователь {user[0]}, подключен: {user[1]}:{user[2]}, '
-    #                       f'время установки соединения: {user[3]}')
-    #         else:
-    #             print('Подключений нет')
-    #     elif command == ser_commands.HISTORY_LOGS:
-    #         name = input('Введите имя пользователя для просмотра истории. '
-    #                      'Для вывода всей истории, просто нажмите Enter: ')
-    #         for user in sorted(data_base.login_history(name)):
-    #             print(f'Пользователь: {user[0]} время входа: {user[1]}. Вход с: {user[2]}:{user[3]}')
-    #     else:
-    #         print('Команда не распознана.')
 
     # Создаём графическое окуружение для сервера:
     server_app = QApplication(sys.argv)

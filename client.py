@@ -16,7 +16,7 @@ from common.utils import get_message, send_message
 from config_network import SettingPortAddress as SPA
 import logs.configs.config_client_log
 import logs.configs.config_messages_log
-from decos import log_decor
+from common.decos import log_decor
 from errors import ServerError, ReqFieldMissingError, IncorrectDataRecivedError
 from metaclasses import ClientMaker
 from client.client_db import ClientDatabase

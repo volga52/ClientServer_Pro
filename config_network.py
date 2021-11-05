@@ -5,7 +5,7 @@ import logging
 import logs.configs.config_host_log
 
 from common.variables import DEFAULT_PORT, DEFAULT_IP_ADDRESS
-from decos import log_decor
+# from common.decos import log_decor
 from descriptors import ValidPort
 
 
@@ -14,7 +14,6 @@ LOGGER = logging.getLogger('hosts')
 
 class SettingPortAddress:
     LOGGER = logging.getLogger('hosts')
-    # logger.info(f"Входящие параметры '{' '.join(sys.argv)}'")
 
     port_return = ValidPort()
 
