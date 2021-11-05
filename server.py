@@ -9,6 +9,8 @@ from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QTimer
 
 from common.variables import *
+import logs.configs.cofig_server_log
+import logs.configs.config_messages_log
 from common.utils import get_message, send_message
 from config_network import SettingPortAddress as SPA
 from common.decos import log_decor

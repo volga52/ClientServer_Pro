@@ -13,7 +13,7 @@ import threading
 
 from common.variables import *
 from common.utils import get_message, send_message
-from config_network import SettingPortAddress as SPA
+from config_network import SettingPortAddress as Spa
 import logs.configs.config_client_log
 import logs.configs.config_messages_log
 from common.decos import log_decor
@@ -372,7 +372,7 @@ def database_load(sock, database, username):
 @log_decor
 def create_connect_client():
     # Установка параметров соединения
-    param_connect = SPA(SPA.create_arg_parser())
+    param_connect = Spa(Spa.create_arg_parser())
     server_address = param_connect.address_return
     server_port = param_connect.port_return
     client_name = param_connect.client_name
