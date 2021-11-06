@@ -50,7 +50,7 @@ def main():
     # Создание транспортного потока между сервером и клиентом.
     # Запуск потока
     try:
-        transport = ClientTransport(server_port, server_address, database, client_name)
+        transport = ClientTransport(server_address, server_port, database, client_name)
     except ServerError as error:
         print(error.text)
         exit(1)
