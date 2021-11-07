@@ -24,7 +24,7 @@ socket_lock = threading.Lock()
 
 # Класс - Транспорт, отвечает за взаимодействие с сервером
 class ClientTransport(threading.Thread, QObject):
-    # Сигналы новое сообщение и потеря соединения
+    # Создание своих собственных сигналов: новое сообщение и потеря соединения
     new_message = pyqtSignal(str)
     connection_lost = pyqtSignal()
 
@@ -61,7 +61,7 @@ class ClientTransport(threading.Thread, QObject):
         Инициализация сокета и
         сообщение серверу о присутствии
         """
-        transport = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.transport = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         # Таймаут необходим для освобождения сокета.
         self.transport.settimeout(5)
@@ -109,8 +109,9 @@ class ClientTransport(threading.Thread, QObject):
         log_messages.debug(f"Сформировано '{PRESENCE}' сообщение пользователя '{self.username}'")
         return ret_out
 
-    # *Функция обрабатывающяя сообщения от сервера. Ничего не возращает. Генерирует исключение при ошибке.
-    def process_sever_ans(self, message):
+    # *Функция обрабатывающяя сообщения от сервера. Ничего не возращает.
+    # Генерирует исключение при ошибке.
+    def process_server_ans(self, message):
         """
         Функция обрабатывающяя сообщения от сервера. Ничего не возращает.
         Генерирует исключение при ошибке.
@@ -154,7 +155,7 @@ class ClientTransport(threading.Thread, QObject):
             answer = get_message(self.transport)
         logger.debug(f'Получен ответ {answer}')
         if RESPONSE in answer and answer[RESPONSE] == 202:
-            for contact in answer[DATA_LIST]:
+            for contact in answer[DATA]:
                 self.database.add_contact(contact)
         else:
             logger.error('Не удалось обновить список контактов.')
@@ -172,7 +173,7 @@ class ClientTransport(threading.Thread, QObject):
             send_message(self.transport, request)
             answer = get_message(self.transport)
         if RESPONSE in answer and answer[RESPONSE] == 202:
-            self.database.add_users(answer[DATA_LIST])
+            self.database.add_users(answer[DATA])
         else:
             logger.error('Не удалось обновить список известных пользователей.')
 

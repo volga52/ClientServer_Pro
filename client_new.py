@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QApplication
 
 import logs.configs.config_client_log
 import logs.configs.config_messages_log
+from client.main_window import ClientMainWindow
 from client.transport import ClientTransport
 from common.variables import *
 from config_network import SettingPortAddress as Spa
@@ -45,7 +46,7 @@ def main():
     # Соответствует client.py_old линия 393
 
     # Создание базы данных
-    database = False
+    database = ClientDatabase(client_name)
 
     # Создание транспортного потока между сервером и клиентом.
     # Запуск потока
@@ -59,7 +60,7 @@ def main():
 
     # Создаём GUI
     main_window = ClientMainWindow(database, transport)
-    main_window.make_connection(transport)
+    main_window.make_connection(transport)      # Здесь происходит проброс сигналов из transport
     main_window.setWindowTitle(f'Чат Программа alpha release - {client_name}')
     client_app.exec_()
 
@@ -68,5 +69,5 @@ def main():
     transport.join()
 
 
-# if __name__ == '__main__':
-#     main()
+if __name__ == '__main__':
+    main()

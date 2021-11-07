@@ -35,7 +35,7 @@ PRESENCE = 'presence'
 RESPONSE = 'response'
 ERROR = 'error'
 DATA = 'data'
-DATA_LIST = 'data_list'
+# DATA_LIST = 'data_list'
 GET_CONTACTS = 'get_contacts'
 # Комнады
 # MESSAGE = 'message'
