@@ -222,7 +222,7 @@ class ClientTransport(threading.Thread, QObject):
                 send_message(self.transport, message)
             except OSError:
                 pass
-        logger.debug('Транспорт завершает работу.')
+        logger.debug(f"Поток клиента {self.username} завершил работу.")
         time.sleep(0.5)
 
     # Функция отправляет сообщения на сервер
