@@ -118,13 +118,22 @@ class ClientTransport(threading.Thread, QObject):
         """
         log_messages.debug(f'Сервер принял, отправил сообщение: {message}')
         # Если это подтверждение
+        # if RESPONSE in message:
+        #     if message[RESPONSE] == 200:
+        #         return '200 : OK'
+        #     elif message[RESPONSE] == 400:
+        #         raise ServerError(f'400 : {message[ERROR]}')
+        #     else:
+        #         logger.debug(f'Принят неизвестный код подтверждения {message[RESPONSE]}')
+
         if RESPONSE in message:
             if message[RESPONSE] == 200:
-                return '200 : OK'
+                return
             elif message[RESPONSE] == 400:
-                raise ServerError(f'400 : {message[ERROR]}')
+                raise ServerError(f'{message[ERROR]}')
             else:
                 logger.debug(f'Принят неизвестный код подтверждения {message[RESPONSE]}')
+
 
         # Если это сообщение от пользователя добавляем в базу, даём сигнал о новом сообщении
         elif ACTION in message \
@@ -239,7 +248,10 @@ class ClientTransport(threading.Thread, QObject):
         # Необходимо дождаться освобождения сокета для отправки сообщения
         with socket_lock:
             send_message(self.transport, message_dict)
+            # resp = get_message(self.transport)
             self.process_server_ans(get_message(self.transport))
+            # self.process_server_ans(resp)
+
             logger.info(f'Отправлено сообщение для пользователя {to}')
 
     def run(self):
@@ -248,10 +260,11 @@ class ClientTransport(threading.Thread, QObject):
         while self.running:
             # Отдыхаем секунду и снова пробуем захватить сокет.
             # если не сделать тут задержку, то отправка может достаточно долго ждать освобождения сокета.
-            time.sleep(1)
+            time.sleep(2)
             with socket_lock:
                 try:
                     self.transport.settimeout(0.5)
+                    # self.transport.settimeout(1)
                     message = get_message(self.transport)
                 except OSError as err:
                     if err.errno:

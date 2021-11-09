@@ -3,8 +3,7 @@ import logging
 
 from PyQt5.QtWidgets import QApplication
 
-import logs.configs.config_client_log
-import logs.configs.config_messages_log
+sys.path.append('../')
 from client.main_window import ClientMainWindow
 from client.transport import ClientTransport
 from common.variables import *
@@ -14,7 +13,6 @@ from common.errors import ServerError
 from common.decos import log_decor
 from client.database import ClientDatabase
 from client.set_client_dialog import UserNameDialog
-
 
 logs_client = logging.getLogger('client')
 logs_message = logging.getLogger('messages')
@@ -48,8 +46,7 @@ def main():
     # Создание базы данных
     database = ClientDatabase(client_name)
 
-    # Создание транспортного потока между сервером и клиентом.
-    # Запуск потока
+    # Запуск транспортного потока между сервером и клиентом.
     try:
         transport = ClientTransport(server_address, server_port, database, client_name)
     except ServerError as error:
@@ -60,8 +57,8 @@ def main():
 
     # Создаём GUI
     main_window = ClientMainWindow(database, transport)
-    main_window.make_connection(transport)      # Здесь происходит проброс сигналов из transport
-    main_window.setWindowTitle(f'Чат Программа alpha release - {client_name}')
+    main_window.make_connection(transport)  # Здесь происходит проброс сигналов из transport
+    main_window.setWindowTitle(f'Чат Программа  - {client_name}')
     client_app.exec_()
 
     # После закрытия графичесой оболочки закрывается все остальное

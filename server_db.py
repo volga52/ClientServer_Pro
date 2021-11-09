@@ -1,11 +1,15 @@
 # Запуск с консолью невозможен
 import os
+import logging
 
 from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData, ForeignKey, DateTime
 from sqlalchemy.orm import mapper, sessionmaker
 from common.variables import *
 import datetime
+from logs.configs import config_client_log
 
+
+logger = logging.getLogger('server')
 
 # Серверная база данных
 class ServerStorage:
@@ -248,7 +252,9 @@ class ServerStorage:
     # Функция возвращает список контактов
     def get_contact(self, user):
         # Пользователь
+        # logger.info(f"Запущена функция get_contact аргумент {user}")
         user = self.session.query(self.AllUsers).filter_by(name=user).one()
+        # logger.info(f"get_contact user={user}")
 
         # Список контактов
         selection = self.session.query(self.UsersContact, self.AllUsers.name). \
@@ -256,8 +262,11 @@ class ServerStorage:
             join(self.AllUsers,
                  self.UsersContact.contact == self.AllUsers.id
                  )
+        # logger.info(f"get_contact selection {selection}")
         # Список 'знакомых' только имена
         list_contacts = [friend[1] for friend in selection.all()]
+        # logger.info(f"get_contact list {list_contacts}")
+
         return list_contacts
 
     # Функция возвращает количество сообщений

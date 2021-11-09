@@ -1,9 +1,10 @@
-from PyQt5.QtWidgets import QMainWindow, qApp, QMessageBox, QApplication, QListView
-from PyQt5.QtGui import QStandardItemModel, QStandardItem, QBrush, QColor
-from PyQt5.QtCore import pyqtSlot, QEvent, Qt
 import sys
 import json
 import logging
+
+from PyQt5.QtWidgets import QMainWindow, qApp, QMessageBox, QApplication, QListView
+from PyQt5.QtGui import QStandardItemModel, QStandardItem, QBrush, QColor
+from PyQt5.QtCore import pyqtSlot, QEvent, Qt
 
 sys.path.append('../')
 from client.main_window_conv import Ui_MainClientWindow
@@ -13,9 +14,9 @@ from client.database import ClientDatabase
 from client.transport import ClientTransport
 from client.set_client_dialog import UserNameDialog
 from common.errors import ServerError
-from logs.configs import config_client_log
 
 logger = logging.getLogger('client')
+log_mes = logging.getLogger('messages')
 
 
 # Класс основного окна
@@ -211,6 +212,7 @@ class ClientMainWindow(QMainWindow):
             if err.errno:
                 self.messages.critical(self, 'Ошибка', 'Потеряно соединение с сервером!')
                 self.close()
+            log_mes.debug(err)
             self.messages.critical(self, 'Ошибка', 'Таймаут соединения!')
         except (ConnectionResetError, ConnectionAbortedError):
             self.messages.critical(self, 'Ошибка', 'Потеряно соединение с сервером!')

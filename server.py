@@ -8,9 +8,8 @@ import threading
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QTimer
 
+sys.path.append('../')
 from common.variables import *
-import logs.configs.cofig_server_log
-import logs.configs.config_messages_log
 from common.utils import get_message, send_message
 from config_network import SettingPortAddress as SPA
 from common.decos import log_decor
@@ -33,6 +32,7 @@ class Server(threading.Thread, metaclass=ServerMaker):
         self.names = dict()  # Словарь, содержащий имена пользователей и соответствующие им сокеты.
         self.clients_list = []  # Список клиентов
         self.messages_list = []  # Список сообщений
+        self.sock = None
 
         super().__init__()
 
@@ -70,7 +70,7 @@ class Server(threading.Thread, metaclass=ServerMaker):
                 client.close()
             return
 
-        # Если это сообщение, то добавляем его в очередь сообщений. Ответ не требуется.
+        # Если это сообщение, то добавляем его в очередь сообщений. И отвечаем
         elif ACTION in message and message[ACTION] == MESSAGE\
                 and DESTINATION in message \
                 and TIME in message \
@@ -79,18 +79,20 @@ class Server(threading.Thread, metaclass=ServerMaker):
                 and self.names[message[SENDER]] == client:
             self.messages_list.append(message)
             self.database.process_message(message[SENDER], message[DESTINATION])
+            send_message(client, RESPONSE_200)
             return
 
         # Сообщение содержит запрос на 'список котактов'
         elif ACTION in message \
                 and message[ACTION] == GET_CONTACTS \
-                and ACCOUNT_NAME in message \
-                and self.names[message[ACCOUNT_NAME]] == client:
+                and USER in message \
+                and self.names[message[USER]] == client:
             response = RESPONSE_202
 
-            # Присоединение к ответу Запроса из БД
-            response[DATA] = self.database.get_contact(message[ACCOUNT_NAME])
+            # Присоединение к ответу Данных из БД
+            response[DATA] = self.database.get_contact(message[USER])
             send_message(client, response)
+            return
 
         # Сообщение добавить контакт
         elif ACTION in message \
@@ -100,6 +102,7 @@ class Server(threading.Thread, metaclass=ServerMaker):
                 self.names[message[USER]] == client:
             self.database.add_contact(message[USER], message[ACCOUNT_NAME])
             send_message(client, RESPONSE_200)
+            return
 
         # Если это запрос известных пользователей
         elif ACTION in message \
@@ -109,6 +112,7 @@ class Server(threading.Thread, metaclass=ServerMaker):
             response = RESPONSE_202
             response[DATA] = [user[0] for user in self.database.users_list()]
             send_message(client, response)
+            return
 
         # Если это удаление контакта
         elif ACTION in message \
@@ -118,13 +122,14 @@ class Server(threading.Thread, metaclass=ServerMaker):
                 and self.names[message[USER]] == client:
             self.database.remove_contact(message[USER], message[ACCOUNT_NAME])
             send_message(client, RESPONSE_200)
+            return
 
         # Если клиент выходит
         elif ACTION in message \
                 and message[ACTION] == EXIT \
                 and ACCOUNT_NAME in message:
             self.database.user_logout(message[ACCOUNT_NAME])
-            logger.info(f"Клиент '{message[ACCOUNT_NAME]}' выключил соединение")
+            logger.info(f"Клиент '{message[ACCOUNT_NAME]}' отключился.")
             self.clients_list.remove(self.names[message[ACCOUNT_NAME]])
             self.names[message[ACCOUNT_NAME]].close()
             del self.names[message[ACCOUNT_NAME]]
@@ -169,15 +174,16 @@ class Server(threading.Thread, metaclass=ServerMaker):
         transport.bind((listen_address, listen_port))
         transport.settimeout(0.5)
 
+        self.sock = transport
+        self.sock.listen()
+
         # Слушаем порт
         # transport.listen(MAX_CONNECTIONS)
-        transport.listen()
+        # transport.listen()
 
-        return transport
-
-    # def start(self):
     def run(self):
-        transport = self.set_socket_server()  #
+        global new_connection
+        self.set_socket_server()  #
 
         # список клиентов , очередь сообщений
         # clients_list = []
@@ -186,12 +192,12 @@ class Server(threading.Thread, metaclass=ServerMaker):
         while True:
             # Ждём подключения, если таймаут вышел, ловим исключение.
             try:
-                client, client_address = transport.accept()
+                client, client_address = self.sock.accept()
             except OSError:
                 pass
             else:
                 # self.logger.warning(f'Установлено соедение с ПК {client_address}')
-                logger.warning(f'Установлено соедение с ПК {client_address}')
+                logger.info(f'Установлено соедение с ПК {client_address}')
                 self.clients_list.append(client)
 
             recv_data_list = []
@@ -213,8 +219,8 @@ class Server(threading.Thread, metaclass=ServerMaker):
                         self.process_client_message(get_message(client_with_message),
                                                     client_with_message)
                     except OSError:
-                        logger.warning(f'Клиент {client_with_message.getpeername()} '
-                                       f'отключился от сервера.')
+                        logger.error(f'Клиент {client_with_message.getpeername()} '
+                                     f'отключился от сервера.')
                         self.clients_list.remove(client_with_message)
 
                         # Удаляем клиента из self.names по значению его сокета client_with_message
@@ -223,6 +229,8 @@ class Server(threading.Thread, metaclass=ServerMaker):
 
                         # Удаляем выпавшего клиента из базы активных
                         self.database.user_logout(client_out)
+                        with conflag_lock:
+                            new_connection = True
 
             # Если есть сообщения, обрабатываем каждое.
             for mess in self.messages_list:
@@ -238,11 +246,13 @@ class Server(threading.Thread, metaclass=ServerMaker):
 
                     # Удаляем выпавшего клиента из базы активных
                     self.database.user_logout(client_out)
+                    with conflag_lock:
+                        new_connection = True
             self.messages_list.clear()
 
 
 def main():
-    logger.warning(f"Запущен server.py")
+    logger.info(f"Запущен server.py")
 
     path = os.path.dirname(os.path.abspath(__file__))  # Путь без файла
     path = os.path.join(path, r'server_base.db3')
