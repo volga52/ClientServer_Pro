@@ -20,7 +20,7 @@ from server_gui import MainWindow, gui_create_model, HistoryWindow, create_stat_
 logger = logging.getLogger('server')
 log_messages = logging.getLogger('messages')
 
-new_connection = False
+# new_connection = False
 conflag_lock = threading.Lock()
 
 
@@ -33,6 +33,7 @@ class Server(threading.Thread, metaclass=ServerMaker):
         self.clients_list = []  # Список клиентов
         self.messages_list = []  # Список сообщений
         self.sock = None
+        self.new_person = False
 
         super().__init__()
 
@@ -45,7 +46,8 @@ class Server(threading.Thread, metaclass=ServerMaker):
         :param client:
         :return:
         """
-        global new_connection
+        # global new_connection
+
         log_messages.debug(f"Разбор сообщения от клиента: '{message}'")
 
         # Если сообщение о присутствии
@@ -61,7 +63,8 @@ class Server(threading.Thread, metaclass=ServerMaker):
                 self.database.user_login(message[USER][ACCOUNT_NAME], client_ip, client_port)
                 send_message(client, RESPONSE_200)
                 with conflag_lock:
-                    new_connection =True
+                    # new_connection =True
+                    self.new_person = True
             else:
                 response = RESPONSE_400
                 response[ERROR] = 'Это имя уже используется.'
@@ -134,7 +137,8 @@ class Server(threading.Thread, metaclass=ServerMaker):
             self.names[message[ACCOUNT_NAME]].close()
             del self.names[message[ACCOUNT_NAME]]
             with conflag_lock:
-                new_connection = True
+                # new_connection = True
+                self.new_person = True
             return
 
         # Иначе отдаём Bad request
@@ -182,7 +186,7 @@ class Server(threading.Thread, metaclass=ServerMaker):
         # transport.listen()
 
     def run(self):
-        global new_connection
+        # global new_connection
         self.set_socket_server()  #
 
         # список клиентов , очередь сообщений
@@ -230,7 +234,8 @@ class Server(threading.Thread, metaclass=ServerMaker):
                         # Удаляем выпавшего клиента из базы активных
                         self.database.user_logout(client_out)
                         with conflag_lock:
-                            new_connection = True
+                            # new_connection = True
+                            self.new_person = True
 
             # Если есть сообщения, обрабатываем каждое.
             for mess in self.messages_list:
@@ -247,7 +252,8 @@ class Server(threading.Thread, metaclass=ServerMaker):
                     # Удаляем выпавшего клиента из базы активных
                     self.database.user_logout(client_out)
                     with conflag_lock:
-                        new_connection = True
+                        # new_connection = True
+                        self.new_person = True
             self.messages_list.clear()
 
 
@@ -277,14 +283,26 @@ def main():
     # Функция обновляющяя список подключённых, проверяет флаг подключения, и
     # если надо обновляет список
     def list_update():
-        global new_connection
-        if new_connection:
+        # global new_connection
+        # new_person = new_connection
+        # new_person = server.new_person
+
+        # if new_connection:
+        #     main_window.active_clients_table.setModel(
+        #         gui_create_model(data_base))
+        #     main_window.active_clients_table.resizeColumnsToContents()
+        #     main_window.active_clients_table.resizeRowsToContents()
+        #     with conflag_lock:
+        #         new_connection = False
+
+        if server.new_person:
             main_window.active_clients_table.setModel(
                 gui_create_model(data_base))
             main_window.active_clients_table.resizeColumnsToContents()
             main_window.active_clients_table.resizeRowsToContents()
             with conflag_lock:
-                new_connection = False
+                server.new_person = False
+                # new_connection = False
 
     # Функция создающяя окно со статистикой клиентов
     def show_statistics():
