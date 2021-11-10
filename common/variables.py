@@ -15,7 +15,7 @@ MAX_PACKAGE_LENGTH = 1024
 # Кодировка проекта
 ENCODING = 'utf-8'
 # LOGGING_LEVEL = 'DEBUG'
-LOGGING_LEVEL = logging.DEBUG
+LOGGING_LEVEL = logging.INFO
 
 # База данных для хранения данных сервера:
 SERVER_DB = 'sqlite:///server_base.db3'

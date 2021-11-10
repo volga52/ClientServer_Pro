@@ -1,7 +1,6 @@
 import os
 import select
 import socket
-import logging
 import sys
 import threading
 
@@ -11,10 +10,10 @@ from PyQt5.QtCore import QTimer
 sys.path.append('../')
 from common.variables import *
 from common.utils import get_message, send_message
-from config_network import SettingPortAddress as SPA
+from config_startup import SettingsStartArguments as Ssa
 from common.decos import log_decor
-from metaclasses import ServerMaker
-from server_db import ServerStorage
+from common.metaclasses import ServerMaker
+from server.server_db import ServerStorage
 from server_gui import MainWindow, gui_create_model, HistoryWindow, create_stat_model
 
 logger = logging.getLogger('server')
@@ -169,7 +168,7 @@ class Server(threading.Thread, metaclass=ServerMaker):
         listen_port = self.param_network.port_return
 
         # self.logger.info(
-        logger.info(
+        logger.debug(
             f'Запущен сервер, порт для подключений: {listen_port}, '
             f'адрес с которого принимаются подключения: {listen_address}. '
             f'Если адрес не указан, принимаются соединения с любых адресов.')
@@ -265,7 +264,8 @@ def main():
 
     data_base = ServerStorage(path)
 
-    server = Server(SPA(SPA.create_arg_parser()), data_base)
+    # server = Server(Ssa(Ssa.create_arg_parser()), data_base)
+    server = Server(Ssa(), data_base)
     server.daemon = True
     server.start()
 

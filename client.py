@@ -7,22 +7,24 @@ sys.path.append('../')
 from client.main_window import ClientMainWindow
 from client.transport import ClientTransport
 from common.variables import *
-from config_network import SettingPortAddress as Spa
+from config_startup import SettingsStartArguments as Ssa
 from common.utils import get_message, send_message
 from common.errors import ServerError
 from common.decos import log_decor
 from client.database import ClientDatabase
 from client.set_client_dialog import UserNameDialog
 
+
+# клиентские логеры
 logs_client = logging.getLogger('client')
 logs_message = logging.getLogger('messages')
 
 
 def main():
-    param_connect = Spa(Spa.create_arg_parser())
-    server_address = param_connect.address_return
-    server_port = param_connect.port_return
-    client_name = param_connect.client_name
+    connection_params = Ssa()
+    server_address = connection_params.address_return
+    server_port = connection_params.port_return
+    client_name = connection_params.client_name
 
     client_app = QApplication(sys.argv)
 

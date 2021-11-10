@@ -284,7 +284,7 @@ class ServerStorage:
 # Отладка                                                   # Запуск с консолью невозможен
 if __name__ == '__main__':
     path = os.path.dirname(os.path.abspath(__file__))  # Путь без файла
-    path = os.path.join(path, r'server_base.db3')
+    path = os.path.join(path, r'../server_base.db3')
 
     test_db = ServerStorage(path)
 

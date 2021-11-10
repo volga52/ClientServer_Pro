@@ -4,7 +4,7 @@
 # import os
 import unittest
 # sys.path.append(os.path.join(os.getcwd(), '..'))
-from config_network import SettingPortAddress as SPA
+from config_startup import SettingsStartArguments as SPA
 
 
 class TestValidFunc(unittest.TestCase):
@@ -14,7 +14,7 @@ class TestValidFunc(unittest.TestCase):
 
     # def test_valid_port_Raises(self):         # Не проходит
     #     with self.assertRaises(Exception):
-    #         SettingPortAddress(self.no_valid_port_args).get_port()
+    #         SettingsStartArguments(self.no_valid_port_args).get_port()
 
     def test_get_port_equal(self):
         # self.assertEqual(SPA(self.valid_args).port_return, 10000)
