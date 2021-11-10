@@ -1,27 +1,30 @@
 import argparse
 import sys
-
 import logging
-import logs.configs.config_host_log
 
 from common.variables import DEFAULT_PORT, DEFAULT_IP_ADDRESS
 # from common.decos import log_decor
-from descriptors import ValidPort
-
+from common.descriptors import ValidPort
 
 LOGGER = logging.getLogger('hosts')
 
 
-class SettingPortAddress:
+class SettingsStartArguments:
     LOGGER = logging.getLogger('hosts')
 
     port_return = ValidPort()
 
-    def __init__(self, parser_):
-        self.name_file_run = parser_[0]
-        self.address_return = parser_[1]
-        self.port_return = parser_[2]
-        self.client_name = parser_[3]
+    def __init__(self):
+        self.name_file_run = None
+        self.address_return = None
+        self.port_return = DEFAULT_PORT
+        self.client_name = None
+
+        self.init_class()
+
+    def init_class(self):
+        parser_ = SettingsStartArguments.create_arg_parser()
+        self.name_file_run, self.address_return, self.port_return, self.client_name = parser_
 
     @staticmethod
     def create_arg_parser():
@@ -42,4 +45,4 @@ class SettingPortAddress:
 
         LOGGER.debug(f"Выходящие значения '{namespace}'")
 
-        return [name_file_run, address_return, int(port_return), client_name]
+        return name_file_run, address_return, int(port_return), client_name

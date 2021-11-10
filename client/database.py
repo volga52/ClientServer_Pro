@@ -29,12 +29,14 @@ class ClientDatabase:
 
     # Конструктор класса
     def __init__(self, name):
+        path = os.path.dirname(os.path.abspath(__file__))
+        file_name = f'client_{name}.db3'
+        path = os.path.join(path, file_name)
+
         # Создаём движок базы данных, поскольку разрешено несколько клиентов одновременно, каждый должен иметь свою БД
         # Поскольку клиент мультипоточный необходимо отключить проверки на подключения с разных потоков,
         # иначе sqlite3.ProgrammingError
-        path = os.path.dirname(os.path.realpath(__file__))
-        filename = f'client_{name}.db3'
-        self.database_engine = create_engine(f'sqlite:///{os.path.join(path, filename)}', echo=False, pool_recycle=7200,
+        self.database_engine = create_engine(f'sqlite:///{path}', echo=False, pool_recycle=7200,
                                              connect_args={'check_same_thread': False})
 
         self.metadata = MetaData()
@@ -117,14 +119,14 @@ class ClientDatabase:
         else:
             return False
 
-    # Функция проверяющяя наличие пользователя контактах
+    # Функция проверяет наличие пользователя контактах
     def check_contact(self, contact):
         if self.session.query(self.Contacts).filter_by(name=contact).count():
             return True
         else:
             return False
 
-    # Функция возвращающая историю переписки
+    # Функция возвращает историю переписки
     def get_history(self, contact):
         query = self.session.query(self.MessageHistory).filter_by(contact=contact)
         return [(history_row.contact, history_row.wind, history_row.message, history_row.date)

@@ -1,27 +1,25 @@
 import os
 import select
 import socket
-import logging
 import sys
 import threading
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QTimer
 
+sys.path.append('../')
 from common.variables import *
-import logs.configs.cofig_server_log
-import logs.configs.config_messages_log
 from common.utils import get_message, send_message
-from config_network import SettingPortAddress as SPA
+from config_startup import SettingsStartArguments as Ssa
 from common.decos import log_decor
-from metaclasses import ServerMaker
-from server_db import ServerStorage
+from common.metaclasses import ServerMaker
+from server.server_db import ServerStorage
 from server_gui import MainWindow, gui_create_model, HistoryWindow, create_stat_model
 
 logger = logging.getLogger('server')
 log_messages = logging.getLogger('messages')
 
-new_connection = False
+# new_connection = False
 conflag_lock = threading.Lock()
 
 
@@ -33,6 +31,8 @@ class Server(threading.Thread, metaclass=ServerMaker):
         self.names = dict()  # Словарь, содержащий имена пользователей и соответствующие им сокеты.
         self.clients_list = []  # Список клиентов
         self.messages_list = []  # Список сообщений
+        self.sock = None
+        self.new_person = False
 
         super().__init__()
 
@@ -45,7 +45,8 @@ class Server(threading.Thread, metaclass=ServerMaker):
         :param client:
         :return:
         """
-        global new_connection
+        # global new_connection
+
         log_messages.debug(f"Разбор сообщения от клиента: '{message}'")
 
         # Если сообщение о присутствии
@@ -61,7 +62,8 @@ class Server(threading.Thread, metaclass=ServerMaker):
                 self.database.user_login(message[USER][ACCOUNT_NAME], client_ip, client_port)
                 send_message(client, RESPONSE_200)
                 with conflag_lock:
-                    new_connection =True
+                    # new_connection =True
+                    self.new_person = True
             else:
                 response = RESPONSE_400
                 response[ERROR] = 'Это имя уже используется.'
@@ -70,7 +72,7 @@ class Server(threading.Thread, metaclass=ServerMaker):
                 client.close()
             return
 
-        # Если это сообщение, то добавляем его в очередь сообщений. Ответ не требуется.
+        # Если это сообщение, то добавляем его в очередь сообщений. И отвечаем
         elif ACTION in message and message[ACTION] == MESSAGE\
                 and DESTINATION in message \
                 and TIME in message \
@@ -79,18 +81,20 @@ class Server(threading.Thread, metaclass=ServerMaker):
                 and self.names[message[SENDER]] == client:
             self.messages_list.append(message)
             self.database.process_message(message[SENDER], message[DESTINATION])
+            send_message(client, RESPONSE_200)
             return
 
         # Сообщение содержит запрос на 'список котактов'
         elif ACTION in message \
                 and message[ACTION] == GET_CONTACTS \
-                and ACCOUNT_NAME in message \
-                and self.names[message[ACCOUNT_NAME]] == client:
+                and USER in message \
+                and self.names[message[USER]] == client:
             response = RESPONSE_202
 
-            # Присоединение к ответу Запроса из БД
-            response[DATA] = self.database.get_contact(message[ACCOUNT_NAME])
+            # Присоединение к ответу Данных из БД
+            response[DATA] = self.database.get_contact(message[USER])
             send_message(client, response)
+            return
 
         # Сообщение добавить контакт
         elif ACTION in message \
@@ -100,6 +104,7 @@ class Server(threading.Thread, metaclass=ServerMaker):
                 self.names[message[USER]] == client:
             self.database.add_contact(message[USER], message[ACCOUNT_NAME])
             send_message(client, RESPONSE_200)
+            return
 
         # Если это запрос известных пользователей
         elif ACTION in message \
@@ -109,6 +114,7 @@ class Server(threading.Thread, metaclass=ServerMaker):
             response = RESPONSE_202
             response[DATA] = [user[0] for user in self.database.users_list()]
             send_message(client, response)
+            return
 
         # Если это удаление контакта
         elif ACTION in message \
@@ -118,18 +124,20 @@ class Server(threading.Thread, metaclass=ServerMaker):
                 and self.names[message[USER]] == client:
             self.database.remove_contact(message[USER], message[ACCOUNT_NAME])
             send_message(client, RESPONSE_200)
+            return
 
         # Если клиент выходит
         elif ACTION in message \
                 and message[ACTION] == EXIT \
                 and ACCOUNT_NAME in message:
             self.database.user_logout(message[ACCOUNT_NAME])
-            logger.info(f"Клиент '{message[ACCOUNT_NAME]}' выключил соединение")
+            logger.info(f"Клиент '{message[ACCOUNT_NAME]}' отключился.")
             self.clients_list.remove(self.names[message[ACCOUNT_NAME]])
             self.names[message[ACCOUNT_NAME]].close()
             del self.names[message[ACCOUNT_NAME]]
             with conflag_lock:
-                new_connection = True
+                # new_connection = True
+                self.new_person = True
             return
 
         # Иначе отдаём Bad request
@@ -160,7 +168,7 @@ class Server(threading.Thread, metaclass=ServerMaker):
         listen_port = self.param_network.port_return
 
         # self.logger.info(
-        logger.info(
+        logger.debug(
             f'Запущен сервер, порт для подключений: {listen_port}, '
             f'адрес с которого принимаются подключения: {listen_address}. '
             f'Если адрес не указан, принимаются соединения с любых адресов.')
@@ -169,15 +177,16 @@ class Server(threading.Thread, metaclass=ServerMaker):
         transport.bind((listen_address, listen_port))
         transport.settimeout(0.5)
 
+        self.sock = transport
+        self.sock.listen()
+
         # Слушаем порт
         # transport.listen(MAX_CONNECTIONS)
-        transport.listen()
+        # transport.listen()
 
-        return transport
-
-    # def start(self):
     def run(self):
-        transport = self.set_socket_server()  #
+        # global new_connection
+        self.set_socket_server()  #
 
         # список клиентов , очередь сообщений
         # clients_list = []
@@ -186,12 +195,12 @@ class Server(threading.Thread, metaclass=ServerMaker):
         while True:
             # Ждём подключения, если таймаут вышел, ловим исключение.
             try:
-                client, client_address = transport.accept()
+                client, client_address = self.sock.accept()
             except OSError:
                 pass
             else:
                 # self.logger.warning(f'Установлено соедение с ПК {client_address}')
-                logger.warning(f'Установлено соедение с ПК {client_address}')
+                logger.info(f'Установлено соедение с ПК {client_address}')
                 self.clients_list.append(client)
 
             recv_data_list = []
@@ -213,8 +222,8 @@ class Server(threading.Thread, metaclass=ServerMaker):
                         self.process_client_message(get_message(client_with_message),
                                                     client_with_message)
                     except OSError:
-                        logger.warning(f'Клиент {client_with_message.getpeername()} '
-                                       f'отключился от сервера.')
+                        logger.error(f'Клиент {client_with_message.getpeername()} '
+                                     f'отключился от сервера.')
                         self.clients_list.remove(client_with_message)
 
                         # Удаляем клиента из self.names по значению его сокета client_with_message
@@ -223,6 +232,9 @@ class Server(threading.Thread, metaclass=ServerMaker):
 
                         # Удаляем выпавшего клиента из базы активных
                         self.database.user_logout(client_out)
+                        with conflag_lock:
+                            # new_connection = True
+                            self.new_person = True
 
             # Если есть сообщения, обрабатываем каждое.
             for mess in self.messages_list:
@@ -238,18 +250,22 @@ class Server(threading.Thread, metaclass=ServerMaker):
 
                     # Удаляем выпавшего клиента из базы активных
                     self.database.user_logout(client_out)
+                    with conflag_lock:
+                        # new_connection = True
+                        self.new_person = True
             self.messages_list.clear()
 
 
 def main():
-    logger.warning(f"Запущен server.py")
+    logger.info(f"Запущен server.py")
 
     path = os.path.dirname(os.path.abspath(__file__))  # Путь без файла
     path = os.path.join(path, r'server_base.db3')
 
     data_base = ServerStorage(path)
 
-    server = Server(SPA(SPA.create_arg_parser()), data_base)
+    # server = Server(Ssa(Ssa.create_arg_parser()), data_base)
+    server = Server(Ssa(), data_base)
     server.daemon = True
     server.start()
 
@@ -267,14 +283,26 @@ def main():
     # Функция обновляющяя список подключённых, проверяет флаг подключения, и
     # если надо обновляет список
     def list_update():
-        global new_connection
-        if new_connection:
+        # global new_connection
+        # new_person = new_connection
+        # new_person = server.new_person
+
+        # if new_connection:
+        #     main_window.active_clients_table.setModel(
+        #         gui_create_model(data_base))
+        #     main_window.active_clients_table.resizeColumnsToContents()
+        #     main_window.active_clients_table.resizeRowsToContents()
+        #     with conflag_lock:
+        #         new_connection = False
+
+        if server.new_person:
             main_window.active_clients_table.setModel(
                 gui_create_model(data_base))
             main_window.active_clients_table.resizeColumnsToContents()
             main_window.active_clients_table.resizeRowsToContents()
             with conflag_lock:
-                new_connection = False
+                server.new_person = False
+                # new_connection = False
 
     # Функция создающяя окно со статистикой клиентов
     def show_statistics():
