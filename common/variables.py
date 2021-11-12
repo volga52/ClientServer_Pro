@@ -19,16 +19,17 @@ LOGGING_LEVEL = logging.INFO
 
 # База данных для хранения данных сервера:
 SERVER_DB = 'sqlite:///server_base.db3'
-
+SERVER_CONFIG = 'server.ini'
 
 # Прококол JIM основные ключи:
 ACTION = 'action'
-
 TIME = 'time'
 USER = 'user'
 ACCOUNT_NAME = 'account_name'
 SENDER = 'from'
 DESTINATION = 'to'
+DATA_BIN = 'bin'
+PUBLIC_KEY = 'pubkey'
 
 # Прочие ключи, используемые в протоколе
 PRESENCE = 'presence'
@@ -45,7 +46,7 @@ CONTACTS = 'contacts'
 ADD_CONTACT = 'add'
 REMOVE_CONTACT = 'remove'
 USERS_REQUEST = 'get_users'
-
+PUBLIC_KEY_REQUEST = 'pubkey_need'
 MESSAGE_TEXT = 'mess_text'
 EXIT = 'exit'
 
@@ -55,9 +56,19 @@ RESPONSE_200 = {RESPONSE: 200}
 # 202
 RESPONSE_202 = {
     RESPONSE: 202,
-    DATA: None}
+    DATA: None
+}
 # 400
 RESPONSE_400 = {
     RESPONSE: 400,
     ERROR: None
+}
+# 205
+RESPONSE_205 = {
+    RESPONSE: 205
+}
+# 511
+RESPONSE_511 = {
+    RESPONSE: 511,
+    DATA_BIN: None
 }
