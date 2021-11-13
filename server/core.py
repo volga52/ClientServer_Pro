@@ -6,7 +6,7 @@ import json
 import hmac
 import binascii
 import os
-from common.metaclasses import ServerMaker
+# from common.metaclasses import ServerMaker
 # from common.descryptors import Port
 from common.variables import *
 from common.utils import send_message, get_message
@@ -55,7 +55,7 @@ class MessageProcessor(threading.Thread):
         super().__init__()
 
     def run(self):
-        '''Метод основной цикл потока.'''
+        '''Метод - основной цикл потока.'''
         # Инициализация Сокета
         self.init_socket()
 
@@ -89,12 +89,13 @@ class MessageProcessor(threading.Thread):
                         self.process_client_message(
                             get_message(client_with_message), client_with_message)
                     except (OSError, json.JSONDecodeError, TypeError) as err:
-                        logger.debug(f'Getting data from client exception.', exc_info=err)
+                        logger.debug(
+                            f'Getting data from client exception.', exc_info=err)
                         self.remove_client(client_with_message)
 
     def remove_client(self, client):
         '''
-        Метод обработчик клиента с которым прервана связь.
+        Метод учитывает клиента с которым прервана связь.
         Ищет клиента и удаляет его из списков и базы:
         '''
         logger.info(f'Клиент {client.getpeername()} отключился от сервера.')
@@ -107,7 +108,7 @@ class MessageProcessor(threading.Thread):
         client.close()
 
     def init_socket(self):
-        '''Метод инициализатор сокета.'''
+        '''Метод инициализирует сокет.'''
         logger.info(
             f'Запущен сервер, порт для подключений: {self.port}, '
             f'адрес с которого принимаются подключения: {self.addr}. '
@@ -123,7 +124,7 @@ class MessageProcessor(threading.Thread):
 
     def process_message(self, message):
         '''
-        Метод отправки сообщения конкретному клиенту.
+        Метод отправляет сообщения конкретному клиенту.
         '''
         if message[DESTINATION] in self.names \
                 and self.names[message[DESTINATION]] in self.listen_sockets:
@@ -144,7 +145,7 @@ class MessageProcessor(threading.Thread):
 
     # @login_required
     def process_client_message(self, message, client):
-        '''Метод отбработчик поступающих сообщений.'''
+        '''Метод обрабатывает поступающие сообщения.'''
         logger.debug(f'Разбор сообщения от клиента : {message}')
         # Если это сообщение о присутствии, принимаем и отвечаем
         if ACTION in message \
@@ -246,7 +247,8 @@ class MessageProcessor(threading.Thread):
                 and ACCOUNT_NAME in message:
 
             response = RESPONSE_511
-            response[DATA_BIN] = self.database.get_pubkey(message[ACCOUNT_NAME])
+            response[DATA_BIN] = self.database.get_pubkey(
+                message[ACCOUNT_NAME])
             # может быть, что ключа ещё нет (пользователь никогда не логинился,
             # тогда шлём 400)
             if response[DATA_BIN]:
@@ -272,7 +274,7 @@ class MessageProcessor(threading.Thread):
                 self.remove_client(client)
 
     def autorize_user(self, message, sock):
-        '''Метод реализующий авторизцию пользователей.'''
+        '''Метод реализует авторизцию пользователей.'''
         # Если имя пользователя уже занято то возвращаем 400
         logger.debug(f'Start auth process for {message[USER]}')
         if message[USER][ACCOUNT_NAME] in self.names.keys():
@@ -355,7 +357,7 @@ class MessageProcessor(threading.Thread):
                 sock.close()
 
     def service_update_lists(self):
-        '''Метод реализующий отправки сервисного сообщения 205 клиентам.'''
+        '''Метод реализует отправки сервисного сообщения 205 клиентам.'''
         for client in self.names:
             try:
                 send_message(self.names[client], RESPONSE_205)

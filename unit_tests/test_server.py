@@ -2,7 +2,7 @@
 # import os
 # import unittest
 import unittest
-# sys.path.append(os.path.join(os.getcwd(), '..'))
+# sys._path.append(os._path.join(os.getcwd(), '..'))
 
 from server import Server
 from common.variables import RESPONSE, ERROR, TIME, USER, ACCOUNT_NAME, ACTION, PRESENCE

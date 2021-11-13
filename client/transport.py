@@ -10,7 +10,7 @@ import binascii
 
 from PyQt5.QtCore import pyqtSignal, QObject
 
-# sys.path.append('../')
+# sys._path.append('../')
 import logs.configs.config_client_log
 import logs.configs.config_messages_log
 from common.utils import get_message, send_message
