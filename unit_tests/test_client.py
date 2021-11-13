@@ -1,7 +1,7 @@
 # import sys
 # import os
 import unittest
-# sys.path.append(os.path.join(os.getcwd(), '..'))
+# sys._path.append(os._path.join(os.getcwd(), '..'))
 from client import Client
 from common.variables import RESPONSE, ERROR
 

@@ -8,7 +8,6 @@ class RegisterUser(QDialog):
     '''Класс диалог регистрации пользователя на сервере.'''
 
     def __init__(self, database, server):
-    # def __init__(self, database):
         super().__init__()
 
         self.database = database
@@ -84,7 +83,9 @@ class RegisterUser(QDialog):
             salt = self.client_name.text().lower().encode('utf-8')
             passwd_hash = hashlib.pbkdf2_hmac(
                 'sha512', passwd_bytes, salt, 10000)
-            self.database.add_user(self.client_name.text(), binascii.hexlify(passwd_hash))
+            self.database.add_user(
+                self.client_name.text(),
+                binascii.hexlify(passwd_hash))
 
             self.messages.information(
                 self, 'Удачно', 'Пользователь успешно зарегистрирован.')
@@ -96,5 +97,5 @@ class RegisterUser(QDialog):
 if __name__ == '__main__':
     app = QApplication([])
     app.setAttribute(Qt.AA_DisableWindowContextHelpButton)
-    dial = RegisterUser(None)
+    dial = RegisterUser(None, None)
     app.exec_()

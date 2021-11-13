@@ -41,7 +41,8 @@ def main():
         if start_dialog.ok_pressed:
             client_name = start_dialog.client_name.text()
             client_passwd = start_dialog.client_passwd.text()
-            logs_client.debug(f"Имя клиента: '{client_name}', password: '{client_passwd}'")
+            logs_client.debug(
+                f"Имя клиента: '{client_name}', password: '{client_passwd}'")
         else:
             exit(0)
 
@@ -66,7 +67,12 @@ def main():
     # Запуск транспортного потока между сервером и клиентом.
     try:
         transport = ClientTransport(
-            server_address, server_port, database, client_name, client_passwd, keys)
+            server_address,
+            server_port,
+            database,
+            client_name,
+            client_passwd,
+            keys)
     except ServerError as error:
         print(error.text)
         exit(1)
@@ -77,7 +83,8 @@ def main():
 
     # Создаём GUI
     main_window = ClientMainWindow(database, transport, keys)
-    main_window.make_connection(transport)  # Здесь происходит проброс сигналов из transport
+    # Здесь происходит проброс сигналов из transport
+    main_window.make_connection(transport)
     main_window.setWindowTitle(f'Программа Чат - в эфире {client_name}')
     client_app.exec_()
 

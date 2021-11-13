@@ -17,6 +17,7 @@ class ClientDatabase:
         '''
         Класс - отображение для таблицы всех пользователей.
         '''
+
         def __init__(self, user):
             self.id = None
             self.user = user
@@ -25,6 +26,7 @@ class ClientDatabase:
         '''
         Класс - отображение для таблицы статистики переданных сообщений.
         '''
+
         def __init__(self, contact, wind, message):
             self.id = None
             self.contact = contact
@@ -37,6 +39,7 @@ class ClientDatabase:
         '''
         Класс - отображение для таблицы контактов.
         '''
+
         def __init__(self, contact):
             self.id = None
             self.name = contact
@@ -97,25 +100,28 @@ class ClientDatabase:
 
     # Функция добавляет контакт
     def add_contact(self, contact):
-        '''Метод добавляющий контакт в базу данных.'''
-        if not self.session.query(self.Contacts).filter_by(name=contact).count():
+        '''Метод добавляет контакт в базу данных.'''
+        if not self.session.query(
+                self.Contacts).filter_by(
+                name=contact).count():
             contact_row = self.Contacts(contact)
             self.session.add(contact_row)
             self.session.commit()
 
     # Функция удаляет контакт
     def del_contact(self, contact):
-        '''Метод удаляющий определённый контакт.'''
+        '''Метод удаляет определённый контакт.'''
         self.session.query(self.Contacts).filter_by(name=contact).delete()
 
     def clear_contacts(self):
-        '''Метод очищающий таблицу со списком контактов.'''
+        '''Метод очищает таблицу со списком контактов.'''
         self.session.query(self.Contacts).delete()
 
     # Функция заполняет таблицу известных пользователей.
-    # Данные о пользователях приходят с сервера, поэтому таблица сначала очищается.
+    # Данные о пользователях приходят с сервера, поэтому таблица сначала
+    # очищается.
     def add_users(self, users_list):
-        '''Метод заполняющий таблицу известных пользователей.'''
+        '''Метод заполняет таблицу известных пользователей.'''
         self.session.query(self.KnownUsers).delete()
         for user in users_list:
             user_row = self.KnownUsers(user)
@@ -124,24 +130,26 @@ class ClientDatabase:
 
     # Функция сохраняет сообщения
     def save_message(self, contact, wind, message):
-        '''Метод сохраняющий сообщение в базе данных.'''
+        '''Метод сохраняет сообщение в базе данных.'''
         message_row = self.MessageHistory(contact, wind, message)
         self.session.add(message_row)
         self.session.commit()
 
     # Функция возвращает контакты
     def get_contacts(self):
-        '''Метод возвращающий список всех контактов.'''
-        return [contact[0] for contact in self.session.query(self.Contacts.name).all()]
+        '''Метод возвращает список всех контактов.'''
+        return [contact[0]
+                for contact in self.session.query(self.Contacts.name).all()]
 
     # Функция возвращает список известных пользователей
     def get_users(self):
-        '''Метод возвращающий список всех известных пользователей.'''
-        return [user[0] for user in self.session.query(self.KnownUsers.user).all()]
+        '''Метод возвращает список всех известных пользователей.'''
+        return [user[0]
+                for user in self.session.query(self.KnownUsers.user).all()]
 
     # Функция проверяет наличие пользователя в известных
     def check_user(self, user):
-        '''Метод проверяющий существует ли пользователь.'''
+        '''Метод проверяет существует ли пользователь.'''
         if self.session.query(self.KnownUsers).filter_by(user=user).count():
             return True
         else:
@@ -149,6 +157,7 @@ class ClientDatabase:
 
     # Функция проверяет наличие пользователя контактах
     def check_contact(self, contact):
+        '''Метод проверяет наличие пользователя в контактах'''
         if self.session.query(self.Contacts).filter_by(name=contact).count():
             return True
         else:
@@ -156,8 +165,10 @@ class ClientDatabase:
 
     # Функция возвращает историю переписки
     def get_history(self, contact):
-        '''Метод возвращающий историю сообщений с определённым пользователем.'''
-        query = self.session.query(self.MessageHistory).filter_by(contact=contact)
+        '''Метод возвращает историю сообщений с определённым пользователем.'''
+        query = self.session.query(
+            self.MessageHistory).filter_by(
+            contact=contact)
         return [(history_row.contact, history_row.wind,
                  history_row.message, history_row.date)
                 for history_row in query.all()]
