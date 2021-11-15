@@ -1,20 +1,13 @@
 import configparser
 import os
-import select
-import socket
 import sys
-import threading
 
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QTimer
 from PyQt5.QtCore import Qt
 
 sys.path.append('../')
 from common.variables import *
-from common.utils import get_message, send_message
-from config_startup import SettingsStartArguments as Ssa
-from common.decos import log_decor
-from common.metaclasses import ServerMaker
+from common.config_startup import SettingsStartArguments as Ssa
 from server.server_db import ServerStorage
 from server.core import MessageProcessor
 from server.main_window import MainWindow

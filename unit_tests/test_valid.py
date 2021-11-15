@@ -4,7 +4,7 @@
 # import os
 import unittest
 # sys._path.append(os._path.join(os.getcwd(), '..'))
-from config_startup import SettingsStartArguments as SPA
+from common.config_startup import SettingsStartArguments as SPA
 
 
 class TestValidFunc(unittest.TestCase):
