@@ -1,6 +1,5 @@
 import os
 import sys
-import logging
 
 from Cryptodome.PublicKey import RSA
 from PyQt5.QtWidgets import QApplication
@@ -9,13 +8,11 @@ sys.path.append('../')
 from client.main_window import ClientMainWindow
 from client.transport import ClientTransport
 from common.variables import *
-from config_startup import SettingsStartArguments as Ssa
-from common.utils import get_message, send_message
+from common.config_startup import SettingsStartArguments as Ssa
 from common.errors import ServerError
-from common.decos import log_decor
 from client.database import ClientDatabase
 from client.set_client_dialog import UserNameDialog
-from logs.configs import *
+from logs.configs import config_client_log, config_messages_log
 
 
 # клиентские логеры

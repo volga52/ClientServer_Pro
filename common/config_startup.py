@@ -12,7 +12,7 @@ logger = logging.getLogger('hosts')
 
 class SettingsStartArguments:
     '''
-    Класс обрабатывает и возвращает стартовые
+    Класс обрабатывает командную строку. Возвращает стартовые
     аргументы запуска файлов server.py и client.py
     '''
     port_return = ValidPort()
@@ -43,9 +43,17 @@ class SettingsStartArguments:
 
     @staticmethod
     def create_arg_parser(ip_address, port_return):
-        logger = logging.getLogger('hosts')
+        '''
+        Метод обрабатывает командную строку запуска файлов
+        :return:
+        :name_file_run:
+        :address_return:
+        :port_return:
+        :client_name:
+        :password:
+        :gui_flag:
+        '''
 
-        '''Метод обрабатывает строку запуска файлов'''
         logger.debug(f"Зупущена config_startup c параметрами {sys.argv}")
         """Предопределение адреса для сервера или клиента """
         name_file_run = 'server' if (
